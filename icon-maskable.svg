@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFD1DC"/>
+      <stop offset="100%" stop-color="#FFB6C1"/>
+    </linearGradient>
+    <linearGradient id="apple" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B6B"/>
+      <stop offset="100%" stop-color="#E74C3C"/>
+    </linearGradient>
+  </defs>
+  <!-- 内边距为maskable预留约10%安全区 -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(102,96)">
+    <ellipse cx="154" cy="216" rx="155" ry="170" fill="url(#apple)"/>
+    <ellipse cx="154" cy="84" rx="38" ry="24" fill="#5C3A4E" opacity="0.3"/>
+    <path d="M154 64 Q132 4 106 -18 Q128 -12 144 22 Q160 36 154 64" fill="#27ae60"/>
+    <path d="M154 64 Q176 4 202 -18 Q180 -12 164 22 Q148 36 154 64" fill="#27ae60"/>
+    <ellipse cx="110" cy="170" rx="26" ry="38" fill="white" opacity="0.4"/>
+  </g>
+</svg>
