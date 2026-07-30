@@ -2,13 +2,17 @@
   "name": "胥胥日常工作台",
   "short_name": "胥胥工作台",
   "description": "电商运营+生活管理一体化私人工作台",
-  "start_url": "./xuxu-workbench.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFD1DC",
   "theme_color": "#FF69B4",
-  "categories": ["productivity", "lifestyle", "business"],
+  "categories": [
+    "productivity",
+    "lifestyle",
+    "business"
+  ],
   "icons": [
     {
       "src": "icon-192.svg",
