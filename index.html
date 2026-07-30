@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="🍎 胥胥工作台">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FFD1DC">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.svg">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<title>🍎 胥胥日常工作台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --pink-light: #FFF0F5;
+    --pink-mid: #FFE4E1;
+    --pink-deep: #FFD1DC;
+    --pink-accent: #FF69B4;
+    --pink-soft: #FFB6C1;
+    --fruit-red: #FF6B6B;
+    --fruit-orange: #FFA94D;
+    --fruit-green: #95D5B2;
+    --fruit-purple: #C77DFF;
+    --text-dark: #5C3A4E;
+    --text-mid: #8B6F7B;
+    --white-glass: rgba(255,255,255,0.72);
+    --white-glass-strong: rgba(255,255,255,0.88);
+    --shadow-soft: 0 8px 32px rgba(255,107,157,0.15);
+    --shadow-card: 0 4px 20px rgba(255,182,193,0.25);
+    --radius: 18px;
+    --radius-sm: 12px;
+  }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+    color: var(--text-dark);
+    background: linear-gradient(180deg, #FFD1DC 0%, #FFE4E1 40%, #FFF0F5 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* 云朵装饰 */
+  .cloud {
+    position: fixed;
+    background: rgba(255,255,255,0.6);
+    border-radius: 50%;
+    filter: blur(2px);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .cloud-1 { width: 200px; height: 80px; top: 8%; right: 10%; animation: float 20s ease-in-out infinite; }
+  .cloud-2 { width: 150px; height: 60px; top: 20%; left: 30%; animation: float 25s ease-in-out infinite reverse; }
+  .cloud-3 { width: 180px; height: 70px; top: 5%; left: 5%; animation: float 30s ease-in-out infinite; }
+  @keyframes float {
+    0%,100% { transform: translateX(0) translateY(0); }
+    50% { transform: translateX(30px) translateY(-15px); }
+  }
+
+  /* 布局 */
+  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* 左侧导航 */
+  .sidebar {
+    width: 250px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,182,193,0.3);
+    padding: 22px 0;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 4px 0 24px rgba(255,107,157,0.08);
+  }
+  .sidebar::-webkit-scrollbar { width: 5px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--pink-soft); border-radius: 5px; }
+  .brand {
+    text-align: center;
+    padding: 0 18px 18px;
+    border-bottom: 2px dashed rgba(255,182,193,0.4);
+    margin-bottom: 14px;
+  }
+  .brand h1 { font-size: 20px; color: var(--pink-accent); font-weight: 700; }
+  .brand p { font-size: 11px; color: var(--text-mid); margin-top: 4px; }
+  .nav-section { margin-bottom: 16px; }
+  .nav-section-title {
+    font-size: 12px;
+    color: var(--text-mid);
+    padding: 6px 22px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 22px;
+    cursor: pointer;
+    color: var(--text-dark);
+    font-size: 14px;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: rgba(255,182,193,0.2); border-left-color: var(--pink-soft); }
+  .nav-item.active { background: rgba(255,105,180,0.12); border-left-color: var(--pink-accent); color: var(--pink-accent); font-weight: 600; }
+  .nav-icon { font-size: 18px; }
+
+  /* 主内容区 */
+  .main {
+    margin-left: 250px;
+    flex: 1;
+    padding: 28px 36px;
+    min-height: 100vh;
+  }
+  .page { display: none; animation: fadeIn 0.3s; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-header { margin-bottom: 24px; }
+  .page-header h2 { font-size: 24px; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+  .page-header p { font-size: 13px; color: var(--text-mid); margin-top: 6px; }
+
+  /* 卡片 */
+  .card {
+    background: var(--white-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(255,255,255,0.6);
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,182,193,0.3);
+  }
+
+  /* 网格 */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+  @media (max-width: 1100px) {
+    .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* 统计卡片 */
+  .stat-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,228,225,0.7));
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    text-align: center;
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(255,255,255,0.7);
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); }
+  .stat-icon { font-size: 32px; margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: var(--pink-accent); }
+  .stat-label { font-size: 12px; color: var(--text-mid); margin-top: 4px; }
+
+  /* 任务清单 */
+  .task-group { margin-bottom: 18px; }
+  .task-group-title { font-size: 14px; font-weight: 600; color: var(--fruit-orange); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+  .task-item:hover { background: rgba(255,255,255,0.85); }
+  .task-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--pink-accent); cursor: pointer; }
+  .task-item.done .task-text { text-decoration: line-through; color: var(--text-mid); }
+  .task-time { font-size: 12px; color: var(--pink-accent); background: rgba(255,105,180,0.1); padding: 2px 8px; border-radius: 8px; }
+  .task-text { flex: 1; font-size: 14px; }
+
+  /* 按钮 */
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--pink-accent), var(--pink-soft)); color: white; box-shadow: 0 4px 12px rgba(255,105,180,0.3); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255,105,180,0.4); }
+  .btn-soft { background: rgba(255,182,193,0.3); color: var(--text-dark); }
+  .btn-soft:hover { background: rgba(255,182,193,0.5); }
+  .btn-small { padding: 6px 12px; font-size: 12px; }
+
+  /* 表单 */
+  .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 140px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text-mid); margin-bottom: 5px; }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid rgba(255,182,193,0.5);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.8);
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: inherit;
+    transition: border 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--pink-accent); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* 爆款卡片 */
+  .hot-card {
+    background: rgba(255,255,255,0.75);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--pink-accent);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s;
+  }
+  .hot-card:hover { transform: translateX(4px); }
+  .hot-card.collected { border-left-color: var(--fruit-orange); background: rgba(255,169,77,0.08); }
+  .hot-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
+  .hot-title { font-size: 15px; font-weight: 600; }
+  .hot-platform { font-size: 11px; padding: 3px 10px; border-radius: 12px; color: white; }
+  .platform-xhs { background: #FF2442; }
+  .platform-dy { background: #000; }
+  .hot-meta { font-size: 12px; color: var(--text-mid); margin-bottom: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .hot-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 8px; margin-right: 6px; }
+  .tag-newbie { background: rgba(149,213,178,0.3); color: #2D6A4F; }
+  .tag-match { background: rgba(255,105,180,0.15); color: var(--pink-accent); }
+  .hot-advice { font-size: 13px; color: var(--text-dark); background: rgba(255,240,245,0.7); padding: 10px; border-radius: 8px; margin-top: 8px; line-height: 1.6; }
+
+  /* 会议 */
+  .meeting-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,228,225,0.6));
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--fruit-purple);
+  }
+  .meeting-day { font-size: 12px; color: var(--fruit-purple); font-weight: 600; }
+  .meeting-title { font-size: 15px; font-weight: 600; margin: 6px 0; }
+  .meeting-countdown { font-size: 13px; color: var(--pink-accent); margin-top: 6px; font-weight: 600; }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px; background: rgba(255,182,193,0.2); color: var(--text-dark); font-weight: 600; border-radius: 8px 8px 0 0; }
+  td { padding: 10px; border-bottom: 1px solid rgba(255,182,193,0.2); }
+  tr:hover td { background: rgba(255,240,245,0.5); }
+  .income-text { color: #2D6A4F; font-weight: 600; }
+  .expense-text { color: var(--fruit-red); font-weight: 600; }
+
+  /* 进度条 */
+  .progress-bar { width: 100%; height: 8px; background: rgba(255,182,193,0.3); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--pink-accent), var(--fruit-orange)); border-radius: 4px; transition: width 0.5s; }
+
+  /* 生理期日历 */
+  .period-calendar { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-top: 12px; }
+  .cal-header { text-align: center; font-size: 11px; color: var(--text-mid); padding: 4px; font-weight: 600; }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.5);
+    color: var(--text-dark);
+  }
+  .cal-day.period { background: rgba(255,107,107,0.25); color: #c0392b; font-weight: 600; }
+  .cal-day.ovulation { background: rgba(255,169,77,0.25); color: #d35400; font-weight: 600; }
+  .cal-day.follicular { background: rgba(149,213,178,0.25); color: #27ae60; }
+  .cal-day.luteal { background: rgba(199,125,255,0.2); color: #8e44ad; }
+  .cal-day.today { outline: 2px solid var(--pink-accent); font-weight: 700; }
+
+  /* 天气 */
+  .weather-main { text-align: center; padding: 16px 0; }
+  .weather-temp { font-size: 48px; font-weight: 700; color: var(--pink-accent); }
+  .weather-desc { font-size: 16px; color: var(--text-mid); margin-top: 6px; }
+  .weather-icon { font-size: 56px; }
+  .outfit-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 14px; }
+  .outfit-item::before { content: "✓"; color: var(--fruit-green); font-weight: 700; }
+
+  /* 灵感卡 */
+  .inspire-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,228,225,0.5));
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--fruit-orange);
+  }
+  .inspire-tag { font-size: 11px; background: rgba(255,169,77,0.2); color: #d35400; padding: 2px 10px; border-radius: 8px; display: inline-block; margin-bottom: 8px; }
+  .inspire-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .inspire-content { font-size: 13px; color: var(--text-dark); line-height: 1.7; }
+
+  /* 复盘 */
+  .review-item { background: rgba(255,255,255,0.7); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; border-left: 3px solid var(--fruit-green); }
+  .review-date { font-size: 12px; color: var(--text-mid); margin-bottom: 6px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(92,58,78,0.92);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* 空状态 */
+  .empty { text-align: center; padding: 30px; color: var(--text-mid); font-size: 14px; }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s; box-shadow: none; }
+    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(255,107,157,0.2); }
+    .main { margin-left: 0 !important; padding: 64px 14px 14px; }
+    .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .mobile-toggle { display: flex !important; }
+    .cloud { display: none; }
+    .page-header h2 { font-size: 20px; }
+    .card { padding: 16px; border-radius: 14px; }
+    .stat-value { font-size: 22px; }
+    .install-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
+  }
+  .mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 100;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border: none;
+    box-shadow: 0 4px 12px rgba(255,107,157,0.2);
+    font-size: 20px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(92,58,78,0.4);
+    z-index: 9;
+  }
+  .sidebar-overlay.show { display: block; }
+  /* 安装提示横幅 */
+  .install-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    max-width: 480px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #FF69B4, #FFB6C1);
+    color: white;
+    padding: 14px 18px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(255,105,180,0.4);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    animation: slideUp 0.4s;
+  }
+  .install-banner.show { display: flex; }
+  @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .install-banner-icon { font-size: 28px; }
+  .install-banner-text { flex: 1; font-size: 13px; line-height: 1.4; }
+  .install-banner-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .install-banner-actions { display: flex; gap: 6px; }
+  .install-banner-btn {
+    background: white;
+    color: var(--pink-accent);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .install-banner-close {
+    background: rgba(255,255,255,0.25);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .quick-entry:hover { background: rgba(255,105,180,0.1); transform: translateY(-3px); }
+  .quick-entry-icon { font-size: 30px; }
+  .quick-entry-label { font-size: 12px; color: var(--text-dark); }
+
+  /* 闹钟开关 */
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,182,193,0.5); border-radius: 24px; transition: 0.3s; }
+  .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+  input:checked + .slider { background: var(--pink-accent); }
+  input:checked + .slider:before { transform: translateX(20px); }
+
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; background: var(--fruit-red); color: white; margin-left: 6px; }
+  .section-tip { font-size: 12px; color: var(--text-mid); background: rgba(255,240,245,0.6); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; }
+  .quick-entry { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; background: rgba(255,255,255,0.6); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; }
+  .quick-entry:hover { background: rgba(255,105,180,0.1); transform: translateY(-3px); }
+  .quick-entry-icon { font-size: 30px; }
+  .quick-entry-label { font-size: 12px; color: var(--text-dark); }
+</style>
+</head>
+<body>
+<div class="cloud cloud-1"></div>
+<div class="cloud cloud-2"></div>
+<div class="cloud cloud-3"></div>
+
+<button class="mobile-toggle" onclick="toggleSidebar()">🍎</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="app">
+  <!-- 左侧导航 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>🍎 胥胥工作台</h1>
+      <p>每天进步一点点 🌸</p>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">🍋 今日总览</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">🍋</span> 今日仪表盘</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">🍑 工作区</div>
+      <div class="nav-item" data-page="ecommerce"><span class="nav-icon">🍒</span> 电商运营日常</div>
+      <div class="nav-item" data-page="hot"><span class="nav-icon">🍓</span> 爆款灵感库</div>
+      <div class="nav-item" data-page="meeting"><span class="nav-icon">🍇</span> 会议与闹钟</div>
+      <div class="nav-item" data-page="data"><span class="nav-icon">🍊</span> 电商数据整理</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">🥝 生活区</div>
+      <div class="nav-item" data-page="period"><span class="nav-icon">🍉</span> 生理期管理</div>
+      <div class="nav-item" data-page="weather"><span class="nav-icon">🥭</span> 成都天气穿搭</div>
+      <div class="nav-item" data-page="finance"><span class="nav-icon">🍍</span> 财务记账</div>
+      <div class="nav-item" data-page="review"><span class="nav-icon">🥥</span> 每日复盘灵感</div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+
+    <!-- ============ 今日仪表盘 ============ -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>🍋 今日仪表盘</h2>
+        <p>嗨胥胥，欢迎来到你的专属工作台！今天也要元气满满哦～ <span id="todayDate"></span></p>
+      </div>
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="stat-card"><div class="stat-icon">🍒</div><div class="stat-value" id="dashTaskRate">0%</div><div class="stat-label">今日任务完成率</div></div>
+        <div class="stat-card"><div class="stat-icon">🍇</div><div class="stat-value" id="dashNextMeeting">--</div><div class="stat-label">距下次会议</div></div>
+        <div class="stat-card"><div class="stat-icon">🍉</div><div class="stat-value" id="dashPeriod">--</div><div class="stat-label">生理期阶段</div></div>
+        <div class="stat-card"><div class="stat-icon">🍍</div><div class="stat-value" id="dashFinance">¥0</div><div class="stat-label">今日收支净额</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📋 今日待办速览</div>
+          <div id="dashTasks"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🚀 快捷入口</div>
+          <div class="grid-3">
+            <div class="quick-entry" onclick="goPage('ecommerce')"><div class="quick-entry-icon">🍒</div><div class="quick-entry-label">电商任务</div></div>
+            <div class="quick-entry" onclick="goPage('hot')"><div class="quick-entry-icon">🍓</div><div class="quick-entry-label">爆款灵感</div></div>
+            <div class="quick-entry" onclick="goPage('finance')"><div class="quick-entry-icon">🍍</div><div class="quick-entry-label">记一笔账</div></div>
+            <div class="quick-entry" onclick="goPage('weather')"><div class="quick-entry-icon">🥭</div><div class="quick-entry-label">天气穿搭</div></div>
+            <div class="quick-entry" onclick="goPage('review')"><div class="quick-entry-icon">🥥</div><div class="quick-entry-label">每日复盘</div></div>
+            <div class="quick-entry" onclick="goPage('period')"><div class="quick-entry-icon">🍉</div><div class="quick-entry-label">生理期</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">💡 今日灵感速递</div>
+        <div class="inspire-card" id="dashInspire"></div>
+      </div>
+    </section>
+
+    <!-- ============ 电商运营日常 ============ -->
+    <section class="page" id="page-ecommerce">
+      <div class="page-header">
+        <h2>🍒 电商运营日常</h2>
+        <p>阿里巴巴/淘宝天猫店铺每日工作清单，勾选自动保存进度</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 今日完成进度</div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="font-size:28px;font-weight:700;color:var(--pink-accent);" id="ecoRate">0%</span>
+          <div style="flex:1;"><div class="progress-bar"><div class="progress-fill" id="ecoProgress" style="width:0%"></div></div></div>
+          <span style="font-size:13px;color:var(--text-mid);" id="ecoCount">0/0</span>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🌅 早晨（9:00-12:00）</div>
+          <div class="task-group" id="ecoMorning"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">☀️ 下午（13:00-18:00）</div>
+          <div class="task-group" id="ecoAfternoon"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌙 晚上（19:00-22:00）</div>
+        <div class="task-group" id="ecoEvening"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">➕ 添加自定义任务</div>
+        <div class="form-row">
+          <div class="form-group"><label>时段</label><select id="newTaskSlot"><option value="morning">早晨</option><option value="afternoon">下午</option><option value="evening">晚上</option></select></div>
+          <div class="form-group" style="flex:2;"><label>任务内容</label><input id="newTaskText" placeholder="例如：优化3款商品主图"></div>
+          <div class="form-group"><label>时间</label><input id="newTaskTime" placeholder="如 14:00"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addEcoTask()">添加任务</button>
+        <button class="btn btn-soft" onclick="resetEcoTasks()" style="margin-left:8px;">重置今日任务</button>
+      </div>
+    </section>
+
+    <!-- ============ 爆款灵感库 ============ -->
+    <section class="page" id="page-hot">
+      <div class="page-header">
+        <h2>🍓 爆款灵感库</h2>
+        <p>小红书/抖音每日爆款精选 · 适合新手的二创方向 · 一键获取灵感</p>
+      </div>
+      <div class="section-tip">💡 以下为AI精选的当日爆款参考，标注了「新手友好度」和「二创方向」。点击下方按钮可直达平台热门页查看最新实时数据。</div>
+      <div class="card">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <button class="btn btn-primary btn-small" onclick="filterHot('all')">全部</button>
+          <button class="btn btn-soft btn-small" onclick="filterHot('xhs')">📕 小红书</button>
+          <button class="btn btn-soft btn-small" onclick="filterHot('dy')">🎬 抖音</button>
+          <button class="btn btn-soft btn-small" onclick="filterHot('collected')">⭐ 已收藏</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <a href="https://www.xiaohongshu.com/explore" target="_blank" class="btn btn-primary btn-small">📕 打开小红书热门</a>
+          <a href="https://www.douyin.com/hot" target="_blank" class="btn btn-primary btn-small">🎬 打开抖音热榜</a>
+          <button class="btn btn-soft btn-small" onclick="refreshHot()">🔄 换一批灵感</button>
+        </div>
+        <div id="hotList"></div>
+      </div>
+    </section>
+
+    <!-- ============ 会议与闹钟 ============ -->
+    <section class="page" id="page-meeting">
+      <div class="page-header">
+        <h2>🍇 会议与闹钟提醒</h2>
+        <p>固定复盘会议排期 · 闹钟自动提醒 · 不再错过任何重要会议</p>
+      </div>
+      <div class="card">
+        <div class="card-title">⏰ 下次会议倒计时</div>
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:18px;color:var(--text-mid);" id="nextMeetingLabel">计算中...</div>
+          <div style="font-size:42px;font-weight:700;color:var(--pink-accent);margin:10px 0;" id="nextMeetingCountdown">--</div>
+          <div style="font-size:13px;color:var(--text-mid);">到时间会自动弹出提醒哦～</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;justify-content:center;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span class="switch"><input type="checkbox" id="notify30" checked><span class="slider"></span></span>
+            提前30分钟提醒
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span class="switch"><input type="checkbox" id="notify10" checked><span class="slider"></span></span>
+            提前10分钟提醒
+          </label>
+          <button class="btn btn-primary btn-small" onclick="enableNotify()">🔔 开启浏览器提醒</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📅 固定会议排期</div>
+          <div class="meeting-card">
+            <div class="meeting-day">🗓 每周四 · 15:00</div>
+            <div class="meeting-title">苏州电商 + 东莞电商 复盘会议</div>
+            <div style="font-size:13px;color:var(--text-mid);">两个店铺周度复盘，整理数据、分析问题、制定下周优化方案</div>
+          </div>
+          <div class="meeting-card">
+            <div class="meeting-day">🗓 每周五 · 15:00</div>
+            <div class="meeting-title">武汉电商 + 天津电商 复盘会议</div>
+            <div style="font-size:13px;color:var(--text-mid);">两个店铺周度复盘，整理数据、分析问题、制定下周优化方案</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔔 自定义闹钟</div>
+          <div class="form-row">
+            <div class="form-group"><label>提醒时间</label><input type="datetime-local" id="alarmTime"></div>
+            <div class="form-group"><label>提醒内容</label><input id="alarmLabel" placeholder="例如：去回复客服消息"></div>
+          </div>
+          <button class="btn btn-primary btn-small" onclick="addAlarm()">添加闹钟</button>
+          <div id="alarmList" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 电商数据整理 ============ -->
+    <section class="page" id="page-data">
+      <div class="page-header">
+        <h2>🍊 电商平台数据整理</h2>
+        <p>阿里巴巴/淘宝天猫店铺每日核心数据录入与趋势分析</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📝 录入今日数据</div>
+        <div class="form-row">
+          <div class="form-group"><label>日期</label><input type="date" id="dataDate"></div>
+          <div class="form-group"><label>GMV（元）</label><input type="number" id="dataGmv" placeholder="成交总额"></div>
+          <div class="form-group"><label>访客数</label><input type="number" id="dataVisitors" placeholder="UV"></div>
+          <div class="form-group"><label>转化率（%）</label><input type="number" step="0.01" id="dataConv" placeholder="如 3.5"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>客单价（元）</label><input type="number" id="dataAov" placeholder="平均客单价"></div>
+          <div class="form-group"><label>直通车花费（元）</label><input type="number" id="dataAdCost" placeholder="推广费用"></div>
+          <div class="form-group"><label>直通车ROI</label><input type="number" step="0.01" id="dataRoi" placeholder="如 3.2"></div>
+          <div class="form-group"><label>退款金额（元）</label><input type="number" id="dataRefund" placeholder="退款总额"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveData()">保存数据</button>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📈 GMV 趋势</div>
+          <canvas id="chartGmv" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 转化率 & ROI</div>
+          <canvas id="chartConv" height="180"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 历史数据记录</div>
+        <div style="overflow-x:auto;"><table id="dataTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ 生理期管理 ============ -->
+    <section class="page" id="page-period">
+      <div class="page-header">
+        <h2>🍉 生理期管理</h2>
+        <p>记录周期、自动预测、四期养护，照顾好自己才能更好地工作</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📝 经期记录</div>
+        <div class="form-row">
+          <div class="form-group"><label>上次经期开始日期</label><input type="date" id="periodStart"></div>
+          <div class="form-group"><label>经期天数</label><input type="number" id="periodDays" value="5" min="3" max="10"></div>
+          <div class="form-group"><label>周期天数</label><input type="number" id="periodCycle" value="28" min="21" max="40"></div>
+        </div>
+        <button class="btn btn-primary" onclick="savePeriod()">保存并预测</button>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🌸 当前状态</div>
+          <div id="periodStatus" style="text-align:center;padding:16px 0;"></div>
+          <div id="periodAdvice"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 本月周期日历</div>
+          <div class="period-calendar" id="periodCalendar"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:11px;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(255,107,107,0.4);border-radius:4px;"></span>经期</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(149,213,178,0.4);border-radius:4px;"></span>卵泡期</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(255,169,77,0.4);border-radius:4px;"></span>排卵期</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(199,125,255,0.35);border-radius:4px;"></span>黄体期</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 成都天气穿搭 ============ -->
+    <section class="page" id="page-weather">
+      <div class="page-header">
+        <h2>🥭 成都天气与穿搭</h2>
+        <p>今日成都天气 · 智能穿衣建议 · 出门必带物品清单</p>
+      </div>
+      <div class="card">
+        <div class="card-title">☁️ 今日天气（成都）</div>
+        <div class="weather-main">
+          <div class="weather-icon">⛅</div>
+          <div class="weather-temp" id="weatherTemp">33℃</div>
+          <div class="weather-desc" id="weatherDesc">多云 · 23~33℃ · 微风</div>
+          <div style="font-size:12px;color:var(--text-mid);margin-top:6px;">紫外线中等 · 湿度65% · 空气良</div>
+        </div>
+        <div class="form-row" style="margin-top:14px;">
+          <div class="form-group"><label>手动更新今日实际天气</label><input id="weatherInput" placeholder="如：雷阵雨 25℃"></div>
+          <button class="btn btn-soft btn-small" onclick="updateWeather()" style="align-self:flex-end;">更新</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">👗 今日穿衣建议</div>
+          <div id="outfitList"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🎒 出门必带物品</div>
+          <div id="carryList"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌤 未来3天预报</div>
+        <div class="grid-3" id="forecast"></div>
+      </div>
+    </section>
+
+    <!-- ============ 财务记账 ============ -->
+    <section class="page" id="page-finance">
+      <div class="page-header">
+        <h2>🍍 财务记账</h2>
+        <p>收入支出一目了然 · 本月汇总 · 趋势可视化</p>
+      </div>
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="finIncome" style="color:#2D6A4F;">¥0</div><div class="stat-label">本月收入</div></div>
+        <div class="stat-card"><div class="stat-icon">💸</div><div class="stat-value" id="finExpense" style="color:var(--fruit-red);">¥0</div><div class="stat-label">本月支出</div></div>
+        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="finNet">¥0</div><div class="stat-label">本月净结余</div></div>
+        <div class="stat-card"><div class="stat-icon">🛍</div><div class="stat-value" id="finToday">¥0</div><div class="stat-label">今日收支</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📝 记一笔</div>
+        <div class="form-row">
+          <div class="form-group"><label>类型</label><select id="finType"><option value="expense">支出</option><option value="income">收入</option></select></div>
+          <div class="form-group"><label>金额（元）</label><input type="number" id="finAmount" placeholder="0.00"></div>
+          <div class="form-group"><label>分类</label><select id="finCategory"></select></div>
+          <div class="form-group"><label>日期</label><input type="date" id="finDate"></div>
+          <div class="form-group" style="flex:2;"><label>备注</label><input id="finNote" placeholder="可选备注"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addFinance()">保存</button>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📈 收支趋势</div>
+          <canvas id="chartFin" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">🥧 支出分类占比</div>
+          <canvas id="chartFinPie" height="180"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 近期记录</div>
+        <div style="overflow-x:auto;"><table id="finTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ 每日复盘与灵感 ============ -->
+    <section class="page" id="page-review">
+      <div class="page-header">
+        <h2>🥥 每日复盘与灵感</h2>
+        <p>每日复盘优化 · 灵感提示 · 下次如何做得更好</p>
+      </div>
+      <div class="card">
+        <div class="card-title">✍️ 今日复盘</div>
+        <div class="form-group" style="margin-bottom:12px;"><label>✅ 今日完成了什么</label><textarea id="reviewDone" placeholder="今天做成了哪些事..."></textarea></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>⚠️ 遇到了什么问题</label><textarea id="reviewProblem" placeholder="卡在哪里、哪里不顺畅..."></textarea></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>💡 优化方案</label><textarea id="reviewOptimize" placeholder="下次可以怎么改进..."></textarea></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>🎯 明日重点</label><textarea id="reviewTomorrow" placeholder="明天最重要的事..."></textarea></div>
+        <button class="btn btn-primary" onclick="saveReview()">保存复盘</button>
+      </div>
+      <div class="card">
+        <div class="card-title">🌟 今日灵感速递</div>
+        <div class="section-tip">每天轮换一条电商运营优化灵感，帮你打开思路～</div>
+        <div id="inspireList"></div>
+        <button class="btn btn-soft btn-small" onclick="showMoreInspire()">再看一条灵感 🔄</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📚 历史复盘记录</div>
+        <div id="reviewHistory"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔄 下次如何优化</div>
+        <div class="section-tip">根据你最近的复盘记录，自动总结可改进的方向</div>
+        <div id="optimizeSuggest"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-icon">🍎</div>
+  <div class="install-banner-text">
+    <strong>把工作台放到桌面</strong>
+    <span id="installHint">点击浏览器菜单中的「添加到主屏幕」</span>
+  </div>
+  <div class="install-banner-actions">
+    <button class="install-banner-btn" id="installBtn" style="display:none;">立即安装</button>
+    <button class="install-banner-close" onclick="closeInstallBanner()">✕</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 工具函数 ============ */
+function $(id){return document.getElementById(id);}
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function load(key,def){try{const v=localStorage.getItem('xuxu_'+key);return v?JSON.parse(v):def;}catch(e){return def;}}
+function save(key,val){localStorage.setItem('xuxu_'+key,JSON.stringify(val));}
+
+/* ============ 页面切换 ============ */
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    goPage(item.dataset.page);
+    // 移动端自动关闭侧栏
+    if(window.innerWidth<=768) toggleSidebar();
+  });
+});
+function goPage(page){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
+  window.scrollTo(0,0);
+}
+
+/* ============ 电商运营日常 ============ */
+const defaultEcoTasks={
+  morning:[
+    {time:'09:00',text:'查看昨日店铺核心数据（GMV、访客、转化率）',done:false},
+    {time:'09:30',text:'回复 overnight 客服消息，处理售前咨询',done:false},
+    {time:'10:00',text:'处理待发货订单，跟进物流异常',done:false},
+    {time:'10:30',text:'检查商品库存，设置低库存预警',done:false},
+    {time:'11:00',text:'优化2-3款商品标题，植入热搜词',done:false},
+    {time:'11:30',text:'直通车数据查看，调整出价策略',done:false},
+  ],
+  afternoon:[
+    {time:'13:00',text:'评价管理：回复中差评，引导好评',done:false},
+    {time:'14:00',text:'退款工单处理，降低退款率',done:false},
+    {time:'15:00',text:'【如有会议】参加店铺复盘会议',done:false},
+    {time:'16:00',text:'商品主图/详情页优化（A/B测试）',done:false},
+    {time:'17:00',text:'报名平台活动，检查报名状态',done:false},
+    {time:'17:30',text:'竞品监控：价格、销量、活动动态',done:false},
+  ],
+  evening:[
+    {time:'19:00',text:'查看当日数据汇总，对比目标完成情况',done:false},
+    {time:'19:30',text:'整理爆款灵感，规划明日内容/选品',done:false},
+    {time:'20:00',text:'填写店铺日报，记录关键数据',done:false},
+    {time:'21:00',text:'制定明日工作计划，排好优先级',done:false},
+  ]
+};
+function getEcoTasks(){
+  const key='eco_'+todayStr();
+  const saved=load(key,null);
+  if(saved) return saved;
+  // 检查是否有昨天的任务模板可继承结构
+  save(key,JSON.parse(JSON.stringify(defaultEcoTasks)));
+  return JSON.parse(JSON.stringify(defaultEcoTasks));
+}
+function renderEco(){
+  const tasks=getEcoTasks();
+  const slots=[['morning','ecoMorning'],['afternoon','ecoAfternoon'],['evening','ecoEvening']];
+  let total=0,done=0;
+  slots.forEach(([k,id])=>{
+    const c=$(id);c.innerHTML='';
+    (tasks[k]||[]).forEach((t,i)=>{
+      total++;
+      if(t.done)done++;
+      const div=document.createElement('div');
+      div.className='task-item'+(t.done?' done':'');
+      div.innerHTML=`<input type="checkbox" ${t.done?'checked':''} onchange="toggleEco('${k}',${i})"><span class="task-time">${t.time||''}</span><span class="task-text">${t.text}</span>`;
+      c.appendChild(div);
+    });
+  });
+  const rate=total?Math.round(done/total*100):0;
+  $('ecoRate').textContent=rate+'%';
+  $('ecoProgress').style.width=rate+'%';
+  $('ecoCount').textContent=done+'/'+total;
+  $('dashTaskRate').textContent=rate+'%';
+  renderDashTasks();
+}
+function toggleEco(slot,idx){
+  const tasks=getEcoTasks();
+  tasks[slot][idx].done=!tasks[slot][idx].done;
+  save('eco_'+todayStr(),tasks);
+  renderEco();
+}
+function addEcoTask(){
+  const slot=$('newTaskSlot').value;
+  const text=$('newTaskText').value.trim();
+  const time=$('newTaskTime').value.trim();
+  if(!text){toast('请输入任务内容');return;}
+  const tasks=getEcoTasks();
+  if(!tasks[slot])tasks[slot]=[];
+  tasks[slot].push({time,text,done:false});
+  save('eco_'+todayStr(),tasks);
+  $('newTaskText').value='';$('newTaskTime').value='';
+  renderEco();toast('任务已添加 🍒');
+}
+function resetEcoTasks(){
+  if(!confirm('确定重置今日所有任务为未完成？'))return;
+  const tasks=getEcoTasks();
+  Object.keys(tasks).forEach(k=>tasks[k].forEach(t=>t.done=false));
+  save('eco_'+todayStr(),tasks);
+  renderEco();toast('已重置 ✨');
+}
+
+/* ============ 爆款灵感库 ============ */
+const hotDataPool=[
+  {platform:'xhs',title:'学生党平价穿搭｜100块穿出高级感',likes:'12.3w',category:'穿搭',newbie:true,match:95,advice:'保留「平价+高级感」反差钩子，换成你店铺在售单品做同款搭配合集，封面用对比图（左边贵价/右边平价），文案加入价格标签。'},
+  {platform:'dy',title:'夏天必入的5件白T恤测评',likes:'89.6w',category:'测评',newbie:true,match:90,advice:'「必入N件」是黄金句式，换成你店铺的白T/基础款做测评视频，突出面料对比和上身效果，结尾引导店铺搜索。'},
+  {platform:'xhs',title:'1688源头工厂探店｜一件代发',likes:'6.8w',category:'货源',newbie:true,match:88,advice:'工厂探店类内容信任度高，可联系你的供应商拍探店素材，强调「源头价」「一件代发」，适合新手引流。'},
+  {platform:'dy',title:'退货率0%的衣服长什么样',likes:'45.2w',category:'种草',newbie:false,match:82,advice:'「退货率0%」制造好奇钩子，可改造成「退货率最低的3款衣服」，用你店铺真实退换数据背书，增加可信度。'},
+  {platform:'xhs',title:'微胖女生穿搭｜显瘦10斤',likes:'23.1w',category:'穿搭',newbie:true,match:92,advice:'人群细分+效果量化是好公式，针对你目标客群（如微胖/小个子/梨形）做显瘦穿搭，用前后对比图。'},
+  {platform:'dy',title:'一件衣服的10种穿法',likes:'67.8w',category:'穿搭',newbie:true,match:94,advice:'「N种穿法」系列易爆款且好操作，选你店铺百搭单品拍一衣多穿，降低新手拍摄难度，转化率高。'},
+  {platform:'xhs',title:'夏日通勤穿搭不重样30天',likes:'15.6w',category:'穿搭',newbie:false,match:85,advice:'「N天不重样」是持续更新系列，可改成7天或14天版本降低难度，每天一条保持更新频率，养号效果好。'},
+  {platform:'dy',title:'开店3年踩过的坑',likes:'34.5w',category:'干货',newbie:false,match:80,advice:'经验分享类内容涨粉快，整理你做电商踩过的坑做系列，建立专业人设，间接带店铺流量。'},
+  {platform:'xhs',title:'性价比之王｜百元内好物分享',likes:'9.2w',category:'种草',newbie:true,match:91,advice:'「性价比之王」+价格区间是好钩子，选店铺3-5款百元内爆款做合集，封面统一价格标签风格。'},
+  {platform:'dy',title:'买家秀vs卖家秀实测',likes:'56.7w',category:'测评',newbie:true,match:87,advice:'对比类内容天然有传播力，用真实买家秀对比自家商品，展示还原度，建立信任感，促进转化。'},
+  {platform:'xhs',title:'小个子穿搭｜150cm也能穿出气场',likes:'18.4w',category:'穿搭',newbie:true,match:93,advice:'身高细分精准触达目标人群，针对小个子做穿搭系列，强调比例优化技巧，评论区互动率高。'},
+  {platform:'dy',title:'夏天最值得买的3件单品',likes:'42.1w',category:'种草',newbie:true,match:89,advice:'「最值得买」清单类内容决策成本低，选店铺爆款做Top3推荐，每款说清1个核心卖点+1个使用场景。'},
+];
+let hotCurrentFilter='all';
+let hotShowCount=6;
+function renderHot(){
+  const collected=load('hotCollected',[]);
+  let list=hotDataPool;
+  if(hotCurrentFilter==='xhs')list=list.filter(h=>h.platform==='xhs');
+  else if(hotCurrentFilter==='dy')list=list.filter(h=>h.platform==='dy');
+  else if(hotCurrentFilter==='collected')list=list.filter(h=>collected.includes(h.title));
+  list=list.slice(0,hotShowCount);
+  const c=$('hotList');
+  if(list.length===0){c.innerHTML='<div class="empty">还没有收藏的爆款，快去发现灵感吧～</div>';return;}
+  c.innerHTML=list.map(h=>{
+    const isCollected=collected.includes(h.title);
+    return `<div class="hot-card${isCollected?' collected':''}">
+      <div class="hot-header">
+        <div class="hot-title">${h.title}</div>
+        <span class="hot-platform ${h.platform==='xhs'?'platform-xhs':'platform-dy'}">${h.platform==='xhs'?'小红书':'抖音'}</span>
+      </div>
+      <div class="hot-meta">
+        <span>❤️ ${h.likes}</span>
+        <span>📂 ${h.category}</span>
+        <span class="hot-tag ${h.newbie?'tag-newbie':''}">${h.newbie?'🌱 新手友好':'⚡ 需经验'}</span>
+        <span class="hot-tag tag-match">风格匹配度 ${h.match}%</span>
+      </div>
+      <div class="hot-advice"><strong>🎬 二创方向：</strong>${h.advice}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-soft btn-small" onclick="collectHot('${h.title.replace(/'/g,"\\'")}')">${isCollected?'⭐ 已收藏':'☆ 收藏'}</button>
+        <button class="btn btn-primary btn-small" onclick="copyScript('${h.title.replace(/'/g,"\\'")}')">📋 复制二创脚本</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function filterHot(f){hotCurrentFilter=f;hotShowCount=6;renderHot();}
+function refreshHot(){
+  hotDataPool.sort(()=>Math.random()-0.5);
+  hotShowCount=6;renderHot();toast('已为你换一批灵感 🍓');
+}
+function collectHot(title){
+  let c=load('hotCollected',[]);
+  if(c.includes(title))c=c.filter(t=>t!==title);
+  else c.push(title);
+  save('hotCollected',c);renderHot();toast(c.includes(title)?'已收藏 ⭐':'已取消收藏');
+}
+function copyScript(title){
+  const item=hotDataPool.find(h=>h.title===title);
+  if(!item)return;
+  const script=`【二创脚本】${title}\n平台：${item.platform==='xhs'?'小红书':'抖音'}\n分类：${item.category}\n\n拍摄思路：\n${item.advice}\n\n建议结构：\n1. 钩子（前3秒）：用反差/数字/提问抓住注意力\n2. 主体：展示核心卖点和使用场景\n3. 结尾：引导互动（点赞/收藏/进店）\n\n标签：#${item.category} #好物分享 #平价穿搭`;
+  navigator.clipboard.writeText(script).then(()=>toast('脚本已复制到剪贴板 📋')).catch(()=>toast('复制失败，请手动复制'));
+}
+
+/* ============ 会议与闹钟 ============ */
+const meetings=[
+  {day:4,time:'15:00',title:'苏州电商+东莞电商复盘会议',hour:15,min:0},
+  {day:5,time:'15:00',title:'武汉电商+天津电商复盘会议',hour:15,min:0},
+];
+let notifiedKeys=new Set();
+function getNextMeeting(){
+  const now=new Date();
+  for(let i=0;i<14;i++){
+    const d=new Date(now);d.setDate(d.getDate()+i);d.setHours(15,0,0,0);
+    const day=d.getDay();
+    const m=meetings.find(x=>x.day===day);
+    if(m&&d>now) return {date:d,meeting:m};
+  }
+  return null;
+}
+function updateMeetingCountdown(){
+  const next=getNextMeeting();
+  if(!next){
+    $('nextMeetingLabel').textContent='暂无会议';
+    $('nextMeetingCountdown').textContent='--';
+    $('dashNextMeeting').textContent='无';
+    return;
+  }
+  const now=new Date();
+  const diff=next.date-now;
+  if(diff<=0){$('nextMeetingCountdown').textContent='进行中';return;}
+  const days=Math.floor(diff/86400000);
+  const hours=Math.floor((diff%86400000)/3600000);
+  const mins=Math.floor((diff%3600000)/60000);
+  const secs=Math.floor((diff%60000)/1000);
+  $('nextMeetingLabel').textContent=next.meeting.title;
+  $('nextMeetingCountdown').textContent=(days>0?days+'天 ':'')+hours+'时 '+mins+'分 '+secs+'秒';
+  const dayLabel=days>0?days+'天后':'今天';
+  $('dashNextMeeting').textContent=dayLabel;
+  // 通知检查
+  const key30=next.date.getTime()+'-30';
+  const key10=next.date.getTime()+'-10';
+  if($('notify30').checked && diff<=30*60000 && diff>29*60000 && !notifiedKeys.has(key30)){
+    notify('会议提醒',`30分钟后有会议：${next.meeting.title}`);
+    notifiedKeys.add(key30);
+  }
+  if($('notify10').checked && diff<=10*60000 && diff>9*60000 && !notifiedKeys.has(key10)){
+    notify('会议提醒',`10分钟后有会议：${next.meeting.title}`);
+    notifiedKeys.add(key10);
+  }
+}
+function notify(title,body){
+  if(Notification.permission==='granted'){
+    new Notification(title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍇</text></svg>'});
+  }
+  toast(title+': '+body);
+}
+function enableNotify(){
+  if(!('Notification' in window)){toast('浏览器不支持通知');return;}
+  Notification.requestPermission().then(p=>{
+    if(p==='granted')toast('已开启会议提醒 🍇');
+    else toast('需要允许通知才能提醒哦');
+  });
+}
+let alarms=load('alarms',[]);
+function renderAlarms(){
+  const now=Date.now();
+  alarms=alarms.filter(a=>new Date(a.time).getTime()>now);
+  save('alarms',alarms);
+  const c=$('alarmList');
+  if(alarms.length===0){c.innerHTML='<div class="empty">暂无自定义闹钟</div>';return;}
+  c.innerHTML=alarms.map((a,i)=>`<div class="task-item"><span>🔔</span><span class="task-text">${a.label}</span><span class="task-time">${new Date(a.time).toLocaleString('zh-CN')}</span><button class="btn btn-soft btn-small" onclick="delAlarm(${i})">删除</button></div>`).join('');
+}
+function addAlarm(){
+  const time=$('alarmTime').value;
+  const label=$('alarmLabel').value.trim()||'提醒';
+  if(!time){toast('请选择提醒时间');return;}
+  alarms.push({time,label});
+  alarms.sort((a,b)=>new Date(a.time)-new Date(b.time));
+  save('alarms',alarms);
+  $('alarmTime').value='';$('alarmLabel').value='';
+  renderAlarms();toast('闹钟已添加 🔔');
+}
+function delAlarm(i){alarms.splice(i,1);save('alarms',alarms);renderAlarms();}
+function checkAlarms(){
+  const now=Date.now();
+  alarms.forEach((a,i)=>{
+    if(new Date(a.time).getTime()<=now){
+      notify('闹钟提醒',a.label);
+      alarms.splice(i,1);
+    }
+  });
+  save('alarms',alarms);
+  if(document.getElementById('page-meeting').classList.contains('active'))renderAlarms();
+}
+
+/* ============ 电商数据 ============ */
+let dataRecords=load('dataRecords',[]);
+let chartGmv,chartConv;
+function initDataForm(){$('dataDate').value=todayStr();}
+function saveData(){
+  const rec={
+    date:$('dataDate').value,
+    gmv:parseFloat($('dataGmv').value)||0,
+    visitors:parseInt($('dataVisitors').value)||0,
+    conv:parseFloat($('dataConv').value)||0,
+    aov:parseFloat($('dataAov').value)||0,
+    adCost:parseFloat($('dataAdCost').value)||0,
+    roi:parseFloat($('dataRoi').value)||0,
+    refund:parseFloat($('dataRefund').value)||0,
+  };
+  if(!rec.date){toast('请选择日期');return;}
+  const idx=dataRecords.findIndex(r=>r.date===rec.date);
+  if(idx>=0)dataRecords[idx]=rec;else dataRecords.push(rec);
+  dataRecords.sort((a,b)=>a.date.localeCompare(b.date));
+  save('dataRecords',dataRecords);
+  ['dataGmv','dataVisitors','dataConv','dataAov','dataAdCost','dataRoi','dataRefund'].forEach(id=>$(id).value='');
+  renderData();toast('数据已保存 🍊');
+}
+function renderData(){
+  const recent=dataRecords.slice(-10);
+  const t=$('dataTable');
+  if(dataRecords.length===0){t.innerHTML='<tr><td colspan="9" class="empty">暂无数据，先录入今日数据吧</td></tr>';}
+  else{
+    t.innerHTML='<tr><th>日期</th><th>GMV</th><th>访客</th><th>转化率</th><th>客单价</th><th>直通车</th><th>ROI</th><th>退款</th></tr>'+
+      dataRecords.slice().reverse().map(r=>`<tr><td>${r.date}</td><td>¥${r.gmv}</td><td>${r.visitors}</td><td>${r.conv}%</td><td>¥${r.aov}</td><td>¥${r.adCost}</td><td>${r.roi}</td><td>¥${r.refund}</td></tr>`).join('');
+  }
+  // 图表
+  const labels=recent.map(r=>r.date.slice(5));
+  if(chartGmv)chartGmv.destroy();
+  if(chartConv)chartConv.destroy();
+  chartGmv=new Chart($('chartGmv'),{
+    type:'line',
+    data:{labels,datasets:[{label:'GMV(元)',data:recent.map(r=>r.gmv),borderColor:'#FF69B4',backgroundColor:'rgba(255,105,180,0.1)',fill:true,tension:0.3}]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}
+  });
+  chartConv=new Chart($('chartConv'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'转化率(%)',data:recent.map(r=>r.conv),backgroundColor:'#FFA94D'},
+      {label:'ROI',data:recent.map(r=>r.roi),backgroundColor:'#FF69B4'}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}
+  });
+}
+
+/* ============ 生理期 ============ */
+function initPeriodForm(){
+  const saved=load('period',null);
+  if(saved){
+    $('periodStart').value=saved.start;
+    $('periodDays').value=saved.days;
+    $('periodCycle').value=saved.cycle;
+  }
+}
+function savePeriod(){
+  const data={start:$('periodStart').value,days:parseInt($('periodDays').value),cycle:parseInt($('periodCycle').value)};
+  if(!data.start){toast('请选择经期开始日期');return;}
+  save('period',data);
+  renderPeriod();toast('已保存并预测 🍉');
+}
+function renderPeriod(){
+  const data=load('period',null);
+  const status=$('periodStatus');
+  const advice=$('periodAdvice');
+  const cal=$('periodCalendar');
+  if(!data||!data.start){status.innerHTML='<div style="font-size:15px;color:var(--text-mid);">请先记录上次经期开始日期</div>';advice.innerHTML='';cal.innerHTML='';$('dashPeriod').textContent='未设置';return;}
+  const start=new Date(data.start);
+  const now=new Date();
+  const cycle=data.cycle||28;
+  const days=data.days||5;
+  // 当前是第几天
+  const dayDiff=Math.floor((now-start)/(86400000));
+  const cycleDay=((dayDiff%cycle)+cycle)%cycle+1;
+  // 预测下次
+  const nextStart=new Date(start);nextStart.setDate(start.getDate()+cycle*Math.ceil(dayDiff/cycle||1));
+  const nextDiff=Math.ceil((nextStart-now)/86400000);
+  // 判断阶段
+  let phase,phaseColor,phaseAdvice;
+  if(cycleDay<=days){phase='经期';phaseColor='var(--fruit-red)';phaseAdvice='注意保暖，避免生冷，多喝温水，减少剧烈运动，多吃补铁食物（红枣、菠菜、瘦肉）。';}
+  else if(cycleDay<=13){phase='卵泡期';phaseColor='#27ae60';phaseAdvice='精力充沛的好时机，适合高强度工作、学习新技能、做重要决策，皮肤状态也好。';}
+  else if(cycleDay<=16){phase='排卵期';phaseColor='#d35400';phaseAdvice='能量高峰，适合做直播、重要沟通、发布新内容，注意个人卫生。';}
+  else{phase='黄体期';phaseColor='#8e44ad';phaseAdvice='可能出现情绪波动、疲惫感，工作节奏适当放慢，多吃富含B6的食物（香蕉、坚果），保证睡眠。';}
+  status.innerHTML=`<div style="font-size:14px;color:var(--text-mid);">当前周期第 <strong style="color:${phaseColor};font-size:20px;">${cycleDay}</strong> 天</div>
+    <div style="font-size:22px;font-weight:700;color:${phaseColor};margin:8px 0;">${phase}</div>
+    <div style="font-size:13px;color:var(--text-mid);">预计下次经期：${fmtDate(nextStart)}（约${nextDiff}天后）</div>`;
+  advice.innerHTML=`<div style="background:rgba(255,240,245,0.7);padding:12px;border-radius:10px;font-size:13px;line-height:1.7;">🌸 <strong>养护建议：</strong>${phaseAdvice}</div>`;
+  $('dashPeriod').textContent=phase;
+  // 日历
+  const y=now.getFullYear(),m=now.getMonth();
+  const firstDay=new Date(y,m,1).getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const weeks=['日','一','二','三','四','五','六'];
+  cal.innerHTML=weeks.map(w=>`<div class="cal-header">${w}</div>`).join('');
+  for(let i=0;i<firstDay;i++)cal.innerHTML+='<div class="cal-day"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const date=new Date(y,m,d);
+    const dd=Math.floor((date-start)/86400000);
+    const cd=((dd%cycle)+cycle)%cycle+1;
+    let cls='cal-day';
+    if(cd<=days)cls+=' period';
+    else if(cd<=13)cls+=' follicular';
+    else if(cd<=16)cls+=' ovulation';
+    else cls+=' luteal';
+    if(d===now.getDate())cls+=' today';
+    cal.innerHTML+=`<div class="${cls}">${d}</div>`;
+  }
+}
+
+/* ============ 天气穿搭 ============ */
+const weatherData={
+  temp:'33℃',desc:'多云 · 23~33℃ · 微风',icon:'⛅',
+  outfits:['轻薄短袖T恤或棉麻上衣','短裤/短裙','外搭一件薄防晒衣（紫外线中等）','凉鞋或洞洞鞋','佩戴墨镜'],
+  carries:['防晒霜（SPF30+）','晴雨两用伞（午后可能阵雨）','保温水杯（多喝水防中暑）','充电宝','湿纸巾/小风扇','薄外套（室内空调冷）'],
+  forecast:[
+    {day:'明天',icon:'⛅',temp:'24~34℃',desc:'多云'},
+    {day:'后天',icon:'🌧',temp:'23~31℃',desc:'阵雨'},
+    {day:'大后天',icon:'⛈',temp:'22~29℃',desc:'雷阵雨'},
+  ]
+};
+function renderWeather(){
+  $('weatherTemp').textContent=weatherData.temp;
+  $('weatherDesc').textContent=weatherData.desc;
+  $('outfitList').innerHTML=weatherData.outfits.map(o=>`<div class="outfit-item">${o}</div>`).join('');
+  $('carryList').innerHTML=weatherData.carries.map(o=>`<div class="outfit-item">${o}</div>`).join('');
+  $('forecast').innerHTML=weatherData.forecast.map(f=>`<div class="stat-card"><div style="font-size:28px;">${f.icon}</div><div style="font-size:13px;font-weight:600;margin:4px 0;">${f.day}</div><div style="font-size:12px;color:var(--text-mid);">${f.temp}</div><div style="font-size:12px;color:var(--pink-accent);">${f.desc}</div></div>`).join('');
+}
+function updateWeather(){
+  const v=$('weatherInput').value.trim();
+  if(!v){toast('请输入天气信息');return;}
+  weatherData.desc=v;
+  renderWeather();toast('天气已更新 🥭');
+}
+
+/* ============ 财务记账 ============ */
+const finCategories={expense:['餐饮','交通','购物','房租','电商投入','日用','其他'],income:['电商收入','工资','副业','其他']};
+let finRecords=load('finRecords',[]);
+let chartFin,chartFinPie;
+function initFinForm(){
+  $('finDate').value=todayStr();
+  updateFinCategory();
+  $('finType').onchange=updateFinCategory;
+}
+function updateFinCategory(){
+  const type=$('finType').value;
+  $('finCategory').innerHTML=finCategories[type].map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function addFinance(){
+  const rec={
+    type:$('finType').value,
+    amount:parseFloat($('finAmount').value)||0,
+    category:$('finCategory').value,
+    date:$('finDate').value,
+    note:$('finNote').value.trim(),
+    ts:Date.now()
+  };
+  if(rec.amount<=0){toast('请输入有效金额');return;}
+  finRecords.push(rec);
+  save('finRecords',finRecords);
+  $('finAmount').value='';$('finNote').value='';
+  renderFin();toast('已记账 🍍');
+}
+function renderFin(){
+  const now=new Date();
+  const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const monthRecs=finRecords.filter(r=>r.date.startsWith(ym));
+  const income=monthRecs.filter(r=>r.type==='income').reduce((s,r)=>s+r.amount,0);
+  const expense=monthRecs.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0);
+  const today=finRecords.filter(r=>r.date===todayStr());
+  const todayNet=today.filter(r=>r.type==='income').reduce((s,r)=>s+r.amount,0)-today.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0);
+  $('finIncome').textContent='¥'+income;
+  $('finExpense').textContent='¥'+expense;
+  $('finNet').textContent='¥'+(income-expense);
+  $('finNet').style.color=income-expense>=0?'#2D6A4F':'var(--fruit-red)';
+  $('finToday').textContent='¥'+todayNet;
+  $('dashFinance').textContent='¥'+todayNet;
+  // 表格
+  const t=$('finTable');
+  const recent=finRecords.slice().reverse().slice(0,15);
+  if(recent.length===0){t.innerHTML='<tr><td colspan="5" class="empty">暂无记录，先记一笔吧</td></tr>';}
+  else{
+    t.innerHTML='<tr><th>日期</th><th>类型</th><th>分类</th><th>金额</th><th>备注</th></tr>'+
+      recent.map(r=>`<tr><td>${r.date}</td><td>${r.type==='income'?'💰 收入':'💸 支出'}</td><td>${r.category}</td><td class="${r.type==='income'?'income-text':'expense-text'}">${r.type==='income'?'+':'-'}¥${r.amount}</td><td>${r.note||'-'}</td></tr>`).join('');
+  }
+  // 趋势图
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    days.push(fmtDate(d));
+  }
+  const incData=days.map(d=>finRecords.filter(r=>r.date===d&&r.type==='income').reduce((s,r)=>s+r.amount,0));
+  const expData=days.map(r=>0);
+  const expData2=days.map(d=>finRecords.filter(r=>r.date===d&&r.type==='expense').reduce((s,r)=>s+r.amount,0));
+  if(chartFin)chartFin.destroy();
+  chartFin=new Chart($('chartFin'),{
+    type:'bar',
+    data:{labels:days.map(d=>d.slice(5)),datasets:[
+      {label:'收入',data:incData,backgroundColor:'#95D5B2'},
+      {label:'支出',data:expData2,backgroundColor:'#FF6B6B'}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}
+  });
+  // 饼图
+  const catMap={};
+  monthRecs.filter(r=>r.type==='expense').forEach(r=>{catMap[r.category]=(catMap[r.category]||0)+r.amount;});
+  if(chartFinPie)chartFinPie.destroy();
+  chartFinPie=new Chart($('chartFinPie'),{
+    type:'doughnut',
+    data:{labels:Object.keys(catMap),datasets:[{data:Object.values(catMap),backgroundColor:['#FF69B4','#FFA94D','#FF6B6B','#C77DFF','#95D5B2','#FFD93D','#FFB6C1']}]},
+    options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}
+  });
+}
+
+/* ============ 每日复盘与灵感 ============ */
+const inspirePool=[
+  {tag:'标题优化',title:'用「数字+痛点+解决方案」公式写标题',content:'例如「3个技巧让你的商品点击率翻倍」。数字让内容更具体，痛点引发共鸣，解决方案给出期待。每周更换一批标题测试CTR。'},
+  {tag:'选品思路',title:'从差评里找新品机会',content:'去看竞品差评，买家抱怨什么你就解决什么。差评=未被满足的需求=新品方向。把差评关键词整理成选品清单。'},
+  {tag:'流量获取',title:'评论区埋词提升搜索权重',content:'在自家商品评论区引导买家写带关键词的评价（如「显瘦」「百搭」），这些词会被平台搜索收录，提升自然流量。'},
+  {tag:'客服话术',title:'用「确认+共情+方案」三步法回差评',content:'先确认问题（「收到您的反馈」），再共情（「理解您的感受」），最后给方案（「我们已优化XX」）。降低差评影响。'},
+  {tag:'视觉设计',title:'主图加「使用场景」提升转化',content:'纯白底图点击率高但转化低，加一张场景图（模特穿着/桌面摆放）让买家脑补使用感，转化率可提升20%+。'},
+  {tag:'标题优化',title:'长尾词比大词更值得做',content:'「连衣裙」竞争太激烈，「微胖女生连衣裙夏」搜索量小但转化高。用生意参谋找搜索量大、竞争小的长尾词。'},
+  {tag:'流量获取',title:'发布时间影响50%曝光',content:'小红书最佳发布：7-9点、12-14点、20-22点；抖音：11-13点、19-22点。固定时间发布养号权重。'},
+  {tag:'选品思路',title:'跟季节提前1个月备货',content:'现在7月就要准备秋季款。看去年同期热销榜，提前备货+提前上架，抢季节流量红利。'},
+  {tag:'客服话术',title:'设置快捷回复提升响应速度',content:'把常见问题（尺码、发货、材质）做成快捷回复模板，响应时间从5分钟降到30秒，提升客服评分。'},
+  {tag:'视觉设计',title:'详情页用「FAB法则」写卖点',content:'Feature（特征）→Advantage（优势）→Benefit（好处）。不是「纯棉面料」，而是「纯棉透气，夏天穿不闷汗」。'},
+  {tag:'数据复盘',title:'关注「加购未付款」人群',content:'加购未付款=高意向未转化。每周导出这批人，发优惠券或客服跟进，能挽回20-30%的订单。'},
+  {tag:'内容运营',title:'爆款内容复用率最大化',content:'一条爆款视频拆成图文版发小红书、拆成直播话术、拆成详情页素材。一次创作，N次复用。'},
+];
+let reviews=load('reviews',[]);
+function saveReview(){
+  const r={
+    date:todayStr(),
+    done:$('reviewDone').value.trim(),
+    problem:$('reviewProblem').value.trim(),
+    optimize:$('reviewOptimize').value.trim(),
+    tomorrow:$('reviewTomorrow').value.trim(),
+    ts:Date.now()
+  };
+  if(!r.done&&!r.problem){toast('请至少填写完成情况或问题');return;}
+  const idx=reviews.findIndex(x=>x.date===r.date);
+  if(idx>=0)reviews[idx]=r;else reviews.push(r);
+  save('reviews',reviews);
+  ['reviewDone','reviewProblem','reviewOptimize','reviewTomorrow'].forEach(id=>$(id).value='');
+  renderReview();toast('复盘已保存 🥥');
+}
+function renderReview(){
+  const c=$('reviewHistory');
+  if(reviews.length===0){c.innerHTML='<div class="empty">暂无复盘记录，开始第一次复盘吧～</div>';}
+  else{
+    c.innerHTML=reviews.slice().reverse().slice(0,10).map(r=>`<div class="review-item">
+      <div class="review-date">📅 ${r.date}</div>
+      ${r.done?`<div style="font-size:13px;margin:4px 0;"><strong>✅ 完成：</strong>${r.done}</div>`:''}
+      ${r.problem?`<div style="font-size:13px;margin:4px 0;"><strong>⚠️ 问题：</strong>${r.problem}</div>`:''}
+      ${r.optimize?`<div style="font-size:13px;margin:4px 0;"><strong>💡 优化：</strong>${r.optimize}</div>`:''}
+      ${r.tomorrow?`<div style="font-size:13px;margin:4px 0;"><strong>🎯 明日：</strong>${r.tomorrow}</div>`:''}
+    </div>`).join('');
+  }
+  // 灵感
+  showInspire();
+  // 优化建议
+  renderOptimize();
+}
+let inspireIdx=0;
+function showInspire(){
+  const dayOfYear=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
+  inspireIdx=dayOfYear%inspirePool.length;
+  const item=inspirePool[inspireIdx];
+  $('inspireList').innerHTML=`<div class="inspire-card"><span class="inspire-tag">${item.tag}</span><div class="inspire-title">${item.title}</div><div class="inspire-content">${item.content}</div></div>`;
+  // 仪表盘
+  $('dashInspire').innerHTML=`<span class="inspire-tag">${item.tag}</span><strong>${item.title}</strong><div style="margin-top:6px;font-size:13px;color:var(--text-dark);line-height:1.6;">${item.content}</div>`;
+}
+function showMoreInspire(){
+  inspireIdx=(inspireIdx+1)%inspirePool.length;
+  const item=inspirePool[inspireIdx];
+  $('inspireList').innerHTML=`<div class="inspire-card"><span class="inspire-tag">${item.tag}</span><div class="inspire-title">${item.title}</div><div class="inspire-content">${item.content}</div></div>`;
+}
+function renderOptimize(){
+  const c=$('optimizeSuggest');
+  if(reviews.length<2){c.innerHTML='<div class="empty">连续复盘2天以上，会自动生成优化建议～</div>';return;}
+  // 统计最近复盘中的问题关键词
+  const recent=reviews.slice(-7);
+  const problems=recent.filter(r=>r.problem).map(r=>r.problem).join(' ');
+  const opts=recent.filter(r=>r.optimize).map(r=>r.optimize).join(' ');
+  const suggestions=[];
+  if(problems.includes('转化')||problems.includes('流量'))suggestions.push('📈 转化/流量是近期高频问题，建议重点优化主图和标题，参考「爆款灵感库」的二创方向。');
+  if(problems.includes('客服')||problems.includes('回复'))suggestions.push('💬 客服效率待提升，建议设置快捷回复模板，把常见问题做成自动回复。');
+  if(problems.includes('库存')||problems.includes('断货'))suggestions.push('📦 库存管理需要系统化，建议设置低库存预警线（如剩余<20件自动提醒补货）。');
+  if(problems.includes('退款')||problems.includes('差评'))suggestions.push('⚠️ 退款/差评需从源头优化，检查商品描述是否与实物一致，详情页避免过度美化。');
+  if(opts.includes('直播'))suggestions.push('🎥 既然计划做直播，建议固定每周2-3场，黄金时段19-21点，提前1小时发布预热短视频。');
+  if(opts.includes('内容')||opts.includes('视频'))suggestions.push('🎬 内容方向不错，建议建立内容日历，固定每周3条短视频+5条图文，保持更新频率养号。');
+  if(suggestions.length===0){
+    suggestions.push('✨ 你已经坚持复盘了 '+reviews.length+' 天，继续保持！复盘本身就是最大的优化。');
+    suggestions.push('📌 建议：把每次复盘的「优化方案」第二天加入电商运营任务清单，形成闭环。');
+  }
+  c.innerHTML=suggestions.map(s=>`<div style="background:rgba(255,240,245,0.6);padding:12px;border-radius:10px;margin-bottom:8px;font-size:13px;line-height:1.6;">${s}</div>`).join('');
+}
+
+/* ============ 仪表盘任务 ============ */
+function renderDashTasks(){
+  const tasks=getEcoTasks();
+  const all=[...tasks.morning,...tasks.afternoon,...tasks.evening];
+  const undone=all.filter(t=>!t.done).slice(0,5);
+  const c=$('dashTasks');
+  if(undone.length===0){c.innerHTML='<div class="empty">🎉 今日任务全部完成！</div>';return;}
+  c.innerHTML=undone.map(t=>`<div class="task-item"><span class="task-time">${t.time||''}</span><span class="task-text">${t.text}</span></div>`).join('');
+}
+
+/* ============ 日期显示 ============ */
+function updateDate(){
+  const d=new Date();
+  const week=['日','一','二','三','四','五','六'][d.getDay()];
+  $('todayDate').textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${week}`;
+}
+
+/* ============ 初始化 ============ */
+function init(){
+  updateDate();
+  renderEco();
+  renderHot();
+  updateMeetingCountdown();
+  renderAlarms();
+  initDataForm();
+  renderData();
+  initPeriodForm();
+  renderPeriod();
+  renderWeather();
+  initFinForm();
+  renderFin();
+  renderReview();
+  setInterval(updateMeetingCountdown,1000);
+  setInterval(checkAlarms,30000);
+  // PWA 注册
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  }
+  // 安装提示
+  setupInstallPrompt();
+}
+init();
+
+/* ============ PWA 安装 ============ */
+let deferredPrompt=null;
+function setupInstallPrompt(){
+  const banner=$('installBanner');
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if(isStandalone){return;} // 已安装不显示
+  // 检测是否 dismiss 过
+  if(localStorage.getItem('xuxu_installDismissed')==='1'){return;}
+  // 移动端或可安装时显示
+  const isMobile=/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if(!isMobile && !deferredPrompt) return;
+  window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault();
+    deferredPrompt=e;
+    $('installBtn').style.display='inline-block';
+    $('installHint').textContent='点击下方「立即安装」按钮';
+    banner.classList.add('show');
+  });
+  if(isIOS){
+    $('installHint').textContent='Safari 分享 → 添加到主屏幕';
+    banner.classList.add('show');
+  } else if(isMobile){
+    setTimeout(()=>{
+      if(!deferredPrompt){
+        $('installHint').textContent='浏览器菜单 → 添加到主屏幕';
+        banner.classList.add('show');
+      }
+    }, 3000);
+  }
+  $('installBtn').onclick=async()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const {outcome}=await deferredPrompt.userChoice;
+    if(outcome==='accepted'){
+      toast('安装成功！🎉 在桌面找到我');
+      banner.classList.remove('show');
+    }
+    deferredPrompt=null;
+  };
+}
+function closeInstallBanner(){
+  $('installBanner').classList.remove('show');
+  localStorage.setItem('xuxu_installDismissed','1');
+}
+
+/* ============ 移动端侧栏切换 ============ */
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
+</body>
+</html>
